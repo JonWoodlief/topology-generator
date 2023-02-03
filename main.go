@@ -98,6 +98,24 @@ func printConnectionYaml(connections []map[string]string, title string) {
 	fmt.Println(string(output))
 }
 
+func removeDuplicates(maps []map[string]string) []map[string]string {
+	seen := make(map[string]bool)
+	uniqueMaps := make([]map[string]string, 0)
+
+	for _, m := range maps {
+		for k, v := range m {
+			key := k + ":" + v
+			if !seen[key] {
+				seen[key] = true
+				uniqueMaps = append(uniqueMaps, m)
+				break
+			}
+		}
+	}
+
+	return uniqueMaps
+}
+
 func main() {
 	data, err := ioutil.ReadFile("regions.yaml")
 	if err != nil {
@@ -115,7 +133,6 @@ func main() {
 	fmt.Println("Parsed Regions:", regions)
 
 	ringTopology := createRingTopology(regions)
-	fmt.Println(ringTopology)
 	printConnectionYaml(ringTopology, "ring topology")
 	createGraphDiagram(regions, ringTopology, "ring-topology")
 
@@ -128,10 +145,12 @@ func main() {
 	createGraphDiagram(regions, connectors, "connectors")
 
 	ringTopologyWithConnectors := append(ringTopology, connectors...)
+	ringTopologyWithConnectors = removeDuplicates(ringTopologyWithConnectors)
 	printConnectionYaml(ringTopologyWithConnectors, "ring topology with connectors")
 	createGraphDiagram(regions, ringTopologyWithConnectors, "ring-topology-connectors")
 
 	bidirectionalRingTopologyWithConnectors := append(bidirectionalRingTopology, connectors...)
+	bidirectionalRingTopologyWithConnectors = removeDuplicates(bidirectionalRingTopologyWithConnectors)
 	printConnectionYaml(bidirectionalRingTopologyWithConnectors, "bidirectional ring topology with connectors")
 	createGraphDiagram(regions, bidirectionalRingTopologyWithConnectors, "bidirectional-ring-topology-connectors")
 }
