@@ -45,7 +45,6 @@ func createGraphDiagram(regions []string, connections []map[string]string, title
 func createRingTopology(regions []string) []map[string]string {
 	topology := make([]map[string]string, 0)
 
-	// create connections between regions
 	for i, region := range regions {
 		var nextRegion string
 		if i == len(regions)-1 {
@@ -81,22 +80,10 @@ func createBidirectionalRingTopology(regions []string) []map[string]string {
 func createDirectionalConnectors(regions []string) []map[string]string {
 	topology := make([]map[string]string, 0)
 
-	for i := 1; i < (len(regions) / 2); i += 2 {
+	//ever single node points to the farthest node across the ring
+	for i := 0; i < len(regions); i += 1 {
 		targetIndex := (i + len(regions)/2) % len(regions)
-		topology = append(topology, map[string]string{regions[i]: regions[targetIndex-1]})
-		topology = append(topology, map[string]string{regions[targetIndex]: regions[i-1]})
-	}
-
-	return topology
-}
-
-func createBidirectionalConnectors(regions []string) []map[string]string {
-	topology := make([]map[string]string, 0)
-
-	for i := 1; i < (len(regions) / 2); i += 2 {
-		oppositeRegion := regions[(i+len(regions)/2)%len(regions)]
-		topology = append(topology, map[string]string{regions[i]: oppositeRegion})
-		topology = append(topology, map[string]string{oppositeRegion: regions[i]})
+		topology = append(topology, map[string]string{regions[i]: regions[targetIndex]})
 	}
 
 	return topology
@@ -140,11 +127,11 @@ func main() {
 	printConnectionYaml(connectors, "connectors")
 	createGraphDiagram(regions, connectors, "connectors")
 
-	ringTopologyWithConnectors := append(connectors, ringTopology...)
+	ringTopologyWithConnectors := append(ringTopology, connectors...)
 	printConnectionYaml(ringTopologyWithConnectors, "ring topology with connectors")
 	createGraphDiagram(regions, ringTopologyWithConnectors, "ring-topology-connectors")
 
-	bidirectionalRingTopologyWithConnectors := append(connectors, bidirectionalRingTopology...)
+	bidirectionalRingTopologyWithConnectors := append(bidirectionalRingTopology, connectors...)
 	printConnectionYaml(bidirectionalRingTopologyWithConnectors, "bidirectional ring topology with connectors")
 	createGraphDiagram(regions, bidirectionalRingTopologyWithConnectors, "bidirectional-ring-topology-connectors")
 }
