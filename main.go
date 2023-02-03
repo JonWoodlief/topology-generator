@@ -12,6 +12,7 @@ import (
 
 func createGraphDiagram(regions []string, connections []map[string]string, title string) {
 	g := graphviz.New()
+	g.SetLayout(graphviz.CIRCO)
 	graph, _ := g.Graph()
 
 	regionNodeMap := make(map[string]*cgraph.Node)
@@ -27,8 +28,16 @@ func createGraphDiagram(regions []string, connections []map[string]string, title
 			i += 1
 		}
 	}
-
-	if err := g.RenderFilename(graph, graphviz.PNG, title); err != nil {
+	imageFileName := "images/" + title + ".png"
+	if err := g.RenderFilename(graph, graphviz.PNG, imageFileName); err != nil {
+		log.Fatal(err)
+	}
+	dotFileName := "dot/" + title + ".dot"
+	if err := g.RenderFilename(graph, graphviz.XDOT, dotFileName); err != nil {
+		log.Fatal(err)
+	}
+	svgFileName := "svg/" + title + ".svg"
+	if err := g.RenderFilename(graph, graphviz.SVG, svgFileName); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -68,12 +77,24 @@ func createBidirectionalRingTopology(regions []string) []map[string]string {
 
 	return topology
 }
-func createConnectors(regions []string) []map[string]string {
+
+func createDirectionalConnectors(regions []string) []map[string]string {
 	topology := make([]map[string]string, 0)
 
-	for i := 3; i < len(regions); i += 4 {
+	for i := 1; i < (len(regions) / 2); i += 2 {
+		targetIndex := (i + len(regions)/2) % len(regions)
+		topology = append(topology, map[string]string{regions[i]: regions[targetIndex-1]})
+		topology = append(topology, map[string]string{regions[targetIndex]: regions[i-1]})
+	}
+
+	return topology
+}
+
+func createBidirectionalConnectors(regions []string) []map[string]string {
+	topology := make([]map[string]string, 0)
+
+	for i := 1; i < (len(regions) / 2); i += 2 {
 		oppositeRegion := regions[(i+len(regions)/2)%len(regions)]
-		fmt.Printf("region %s is directly across from node %s in the ring\n", regions[i], oppositeRegion)
 		topology = append(topology, map[string]string{regions[i]: oppositeRegion})
 		topology = append(topology, map[string]string{oppositeRegion: regions[i]})
 	}
@@ -109,21 +130,21 @@ func main() {
 	ringTopology := createRingTopology(regions)
 	fmt.Println(ringTopology)
 	printConnectionYaml(ringTopology, "ring topology")
-	createGraphDiagram(regions, ringTopology, "images/ringtopo.png")
+	createGraphDiagram(regions, ringTopology, "ring-topology")
 
 	bidirectionalRingTopology := createBidirectionalRingTopology(regions)
 	printConnectionYaml(bidirectionalRingTopology, "bidirectional ring topology")
-	createGraphDiagram(regions, bidirectionalRingTopology, "images/biring.png")
+	createGraphDiagram(regions, bidirectionalRingTopology, "bidirectional-ring-topology")
 
-	connectors := createConnectors(regions)
+	connectors := createDirectionalConnectors(regions)
 	printConnectionYaml(connectors, "connectors")
-	createGraphDiagram(regions, connectors, "images/connectors.png")
+	createGraphDiagram(regions, connectors, "connectors")
 
 	ringTopologyWithConnectors := append(connectors, ringTopology...)
 	printConnectionYaml(ringTopologyWithConnectors, "ring topology with connectors")
-	createGraphDiagram(regions, ringTopologyWithConnectors, "images/ringtopoconnectors.png")
+	createGraphDiagram(regions, ringTopologyWithConnectors, "ring-topology-connectors")
 
 	bidirectionalRingTopologyWithConnectors := append(connectors, bidirectionalRingTopology...)
 	printConnectionYaml(bidirectionalRingTopologyWithConnectors, "bidirectional ring topology with connectors")
-	createGraphDiagram(regions, bidirectionalRingTopologyWithConnectors, "images/biringtopoconnectors.png")
+	createGraphDiagram(regions, bidirectionalRingTopologyWithConnectors, "bidirectional-ring-topology-connectors")
 }
