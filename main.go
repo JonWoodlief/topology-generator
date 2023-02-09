@@ -81,7 +81,7 @@ func createDirectionalConnectors(regions []string) []map[string]string {
 	topology := make([]map[string]string, 0)
 
 	//ever single node points to the farthest node across the ring
-	for i := 0; i < len(regions); i += 1 {
+	for i := 0; i < len(regions); i += 2 {
 		targetIndex := (i + len(regions)/2) % len(regions)
 		topology = append(topology, map[string]string{regions[i]: regions[targetIndex]})
 	}
